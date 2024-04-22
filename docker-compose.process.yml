@@ -1,0 +1,44 @@
+version: '3.8'
+
+volumes:
+  postgres-data:
+  app-data:
+  admin-data:
+
+services:
+  process-services:
+    image: alfresco/process-services:24.1.0
+    ports:
+      - 8090:8080
+    environment:
+      - ACTIVITI_DATASOURCE_DRIVER=org.postgresql.Driver
+      - ACTIVITI_HIBERNATE_DIALECT=org.hibernate.dialect.PostgreSQLDialect
+      - ACTIVITI_DATASOURCE_URL=jdbc:postgresql://database:5432/postgres
+      - ACTIVITI_DATASOURCE_USERNAME=postgres
+      - ACTIVITI_DATASOURCE_PASSWORD=root
+    volumes:
+      - app-data:/usr/local/tomcat
+    depends_on:
+      - database
+  process-services-admin:
+    image: alfresco/process-services-admin:24.1.0
+    ports:
+      - 8095:8080
+    environment:
+      - ACTIVITI_ADMIN_REST_APP_HOST=http://process-services
+      - ACTIVITI_ADMIN_REST_APP_PORT=8080
+      - ACTIVITI_ADMIN_REST_APP_USERNAME=admin@app.activiti.com
+      - ACTIVITI_ADMIN_REST_APP_PASSWORD=admin
+      - ACTIVITI_DATASOURCE_DRIVER=org.postgresql.Driver
+      - ACTIVITI_HIBERNATE_DIALECT=org.hibernate.dialect.PostgreSQLDialect
+    volumes:
+      - admin-data:/usr/local/tomcat
+    depends_on:
+      - database
+      - process-services
+  database:
+    image: postgres:16.1-alpine3.19
+    environment:
+      - POSTGRES_PASSWORD=root
+    volumes:
+      - postgres-data:/var/lib/postgresql
